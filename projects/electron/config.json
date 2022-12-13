@@ -1,0 +1,42 @@
+{
+  "appId": "hautecouture.mpf.remover",
+  "productName": "MpfRmover",
+  "asar": false,
+  "directories": {
+    "output": "../release/"
+  },
+  "files": [
+    "**/*",
+    "!.angular/",
+    "!.vscode/",
+    "!projects/",
+    "!.editorconfig",
+    "!.gitignore",
+    "!angular.json",
+    "!package-lock.json",
+    "!package.json",
+    "!README.md",
+    "!tsconfig.json"
+  ],
+  "extraResources": [
+    {
+      "from": "./renderer/dist",
+      "to": "app",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "./electron/dist",
+      "to": "app",
+      "filter": ["**/*.js*"]
+    }
+  ],
+  "win": {
+    "icon": "../renderer/assets/icon/icon.png",
+    "target": ["nsis"]
+  },
+  "portable": {},
+  "mac": {
+    "icon": "../renderer/assets/icon/icon.png",
+    "target": ["dmg"]
+  }
+}
