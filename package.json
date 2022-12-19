@@ -4,7 +4,7 @@
   "author": {
     "name": "orzirou"
   },
-  "main": "./projects/electron/main.js",
+  "main": "./electron/main.js",
   "description": "This application makes electron & angular.",
   "scripts": {
     "ng": "ng",
@@ -13,7 +13,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:electron": "tsc -p ./projects/electron/tsconfig.json",
-    "package": "electron-builder -c ./projects/electron/config.json --mac --x64"
+    "package": "electron-builder -c ./projects/electron/config.json --mac --x64 --win --x64",
+    "package:test": "npm run build && npm run build:electron && npm run package"
   },
   "private": true,
   "dependencies": {
@@ -27,6 +28,9 @@
     "@angular/platform-browser": "^14.2.0",
     "@angular/platform-browser-dynamic": "^14.2.0",
     "@angular/router": "^14.2.0",
+    "dist-exiftool": "^10.53.0",
+    "lodash": "^4.17.21",
+    "node-exiftool": "^2.3.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
@@ -36,6 +40,7 @@
     "@angular/cli": "~14.2.10",
     "@angular/compiler-cli": "^14.2.0",
     "@types/jasmine": "~4.0.0",
+    "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.11",
     "electron": "^22.0.0",
     "electron-builder": "^23.6.0",

@@ -3,12 +3,12 @@
   "productName": "MpfRmover",
   "asar": false,
   "directories": {
-    "output": "../release/"
+    "output": "./release/"
   },
   "files": [
     "**/*",
-    "!.angular/",
-    "!.vscode/",
+    "!.angular",
+    "!.vscode",
     "!projects/",
     "!.editorconfig",
     "!.gitignore",
@@ -20,19 +20,19 @@
   ],
   "extraResources": [
     {
-      "from": "./renderer/dist",
+      "from": "./dist/rendler/*",
       "to": "app",
       "filter": ["**/*"]
     },
     {
-      "from": "./electron/dist",
+      "from": "./projects/electron/dist",
       "to": "app",
       "filter": ["**/*.js*"]
     }
   ],
   "win": {
     "icon": "../renderer/assets/icon/icon.png",
-    "target": ["nsis"]
+    "target": ["zip"]
   },
   "portable": {},
   "mac": {
