@@ -20,7 +20,7 @@
   ],
   "extraResources": [
     {
-      "from": "./dist/rendler/*",
+      "from": "./dist/renderer",
       "to": "app",
       "filter": ["**/*"]
     },
