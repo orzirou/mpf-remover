@@ -32,12 +32,12 @@
     }
   ],
   "win": {
-    "icon": "../renderer/assets/icon/icon.png",
+    "icon": "./projects/renderer/src/assets/icon/icon.png",
     "target": ["zip"]
   },
   "portable": {},
   "mac": {
-    "icon": "../renderer/assets/icon/icon.png",
+    "icon": "./projects/renderer/src/assets/icon/icon.png",
     "target": ["dmg"]
   }
 }
