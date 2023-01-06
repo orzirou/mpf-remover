@@ -1,0 +1,53 @@
+@use "@angular/material" as mat;
+
+@include mat.core();
+
+$app-light-primary: mat.define-palette(mat.$gray-palette, 500);
+$app-light-accent: mat.define-palette(mat.$blue-palette, A200, A100, A400);
+$app-light-warn: mat.define-palette(mat.$red-palette);
+$app-light-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $app-light-primary,
+      accent: $app-light-accent,
+      warn: $app-light-warn,
+    ),
+  )
+);
+
+$app-dark-primary: mat.define-palette(mat.$gray-palette, A200);
+$app-dark-accent: mat.define-palette(mat.$cyan-palette, A200);
+$app-dark-warn: mat.define-palette(mat.$red-palette, A100);
+$app-dark-theme: mat.define-dark-theme(
+  (
+    color: (
+      primary: $app-dark-primary,
+      accent: $app-dark-accent,
+      warn: $app-dark-warn,
+    ),
+  )
+);
+
+.light-theme {
+  @include mat.all-component-themes($app-light-theme);
+
+  background: map-get(mat.$light-theme-background-palette, background);
+  color: map-get(mat.$light-theme-foreground-palette, text);
+
+  .contrast {
+    background: map-get(mat.$dark-theme-background-palette, background);
+    color: map-get(mat.$dark-theme-foreground-palette, text);
+  }
+}
+
+.dark-theme {
+  @include mat.all-component-themes($app-dark-theme);
+
+  background: map-get(mat.$dark-theme-background-palette, background);
+  color: map-get(mat.$dark-theme-foreground-palette, text);
+
+  .contrast {
+    background: map-get(mat.$light-theme-background-palette, background);
+    color: map-get(mat.$light-theme-foreground-palette, text);
+  }
+}
