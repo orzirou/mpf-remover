@@ -30,6 +30,7 @@
     "@angular/router": "^14.2.0",
     "dist-exiftool": "^10.53.0",
     "lodash": "^4.17.21",
+    "ngx-mat-counterspinner": "^14.0.2",
     "node-exiftool": "^2.3.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
