@@ -1,0 +1,137 @@
+<div class="main-page__container">
+  <div
+    *ngIf="(_status | async) === MainPageStatus.Selected"
+    class="main-page__header"
+  >
+    <span class="main-page__header-path">{{
+      _statsList && _statsList[0] ? _statsList[0].dirPath : "-"
+    }}</span>
+    <div class="main-page__header-operation">
+      <button
+        mat-raised-button
+        class="main-page__header-btn"
+        (click)="onClickOpenDirectory()"
+      >
+        <mat-icon>folder_open</mat-icon>
+        フォルダを変更
+      </button>
+      <button
+        mat-raised-button
+        class="main-page__header-btn"
+        color="warn"
+        (click)="onClickClear()"
+      >
+        <mat-icon>backspace</mat-icon>
+        クリア
+      </button>
+    </div>
+  </div>
+  <div class="main-page__body">
+    <ng-container
+      *ngIf="
+        (_status | async) === MainPageStatus.Initialized;
+        then initTemplate;
+        else imageTemplate
+      "
+    ></ng-container>
+  </div>
+</div>
+
+<ng-template #initTemplate>
+  <div class="init-message__container">
+    <div class="message contrast">
+      <button
+        mat-raised-button
+        class="main-page__header-btn"
+        (click)="onClickOpenDirectory()"
+      >
+        <mat-icon>folder_open</mat-icon>
+        フォルダを選択
+      </button>
+      <span>をクリックして画像を含むディレクトリを選択してください。</span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #imageTemplate>
+  <mat-divider></mat-divider>
+  <div class="image-viewer__container">
+    <div class="image-detail">
+      <ng-container
+        *ngIf="_selectFile; then selectFileTemplate; else unselectFileTemplate"
+      ></ng-container>
+    </div>
+    <mat-divider [vertical]="true"></mat-divider>
+    <mat-divider></mat-divider>
+    <div class="image-list">
+      <ul class="image-list__items">
+        <li>
+          <app-image-select
+            *ngFor="
+              let stats of _statsList;
+              let idx = index;
+              trackBy: trackByFile
+            "
+            class="image-list__image"
+            [stats]="stats"
+            (statsChange)="_statsList[idx] = $event"
+            (loadedEvent)="onLoadedImage($event)"
+            (selectEvent)="onSelectFile($event)"
+            (changeTagDelStatusEvent)="onChangeTagDelStatus(stats, $event)"
+          ></app-image-select>
+        </li>
+      </ul>
+      <mat-divider></mat-divider>
+      <div *ngIf="!_isReady" class="image-list__counter">
+        <ngx-mat-counterspinner
+          [value]="_loadCounter"
+          [display]="CounterSpinnerDisplayMode.Ratio"
+          [max]="_statsList.length"
+          [color]="'warn'"
+        ></ngx-mat-counterspinner>
+      </div>
+      <div *ngIf="_isReady" class="image-list__done">
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="!_hasTagDelete"
+          (click)="onClickTagDelete()"
+        >
+          MPFタグ削除
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #selectFileTemplate>
+  <app-image-detail [stats]="_selectFile" [size]="_size"></app-image-detail>
+  <div class="scale-switch">
+    <button
+      mat-mini-fab
+      class="scale-switch__btn"
+      color="accent"
+      matTooltip="フィット"
+      matTooltipPosition="left"
+      (click)="onClickFit()"
+    >
+      <mat-icon>aspect_ratio</mat-icon>
+    </button>
+    <button
+      mat-mini-fab
+      class="scale-switch__btn"
+      color="accent"
+      matTooltip="等倍"
+      matTooltipPosition="left"
+      (click)="onClickCropFree()"
+    >
+      <mat-icon>crop_free</mat-icon>
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #unselectFileTemplate>
+  <div class="unselect-file__container">
+    <div class="message contrast">一覧から選択した画像を表示します。</div>
+  </div>
+</ng-template>

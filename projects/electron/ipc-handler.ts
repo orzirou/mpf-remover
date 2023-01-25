@@ -1,16 +1,27 @@
 import { dialog, app, ipcMain } from 'electron';
-import { map as _map, forEach as _forEach, first as _first } from 'lodash';
+import {
+  map as _map,
+  forEach as _forEach,
+  first as _first,
+  isEmpty as _isEmpty,
+  tap as _tap,
+} from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
 import { from as RxFrom, forkJoin as RxForkJoin, of as RxOf } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
 
 const exiftool = require('node-exiftool');
 const exiftoolBin = require('dist-exiftool');
 const ep = new exiftool.ExiftoolProcess(exiftoolBin);
 
 import { JPEG_BASE64_PREF } from '../common/const';
-import { IFileStats, IExiftoolTag } from '../common/types';
+import {
+  IFileStats,
+  IExiftoolTag,
+  IErrorInfo,
+  ITagDeleteInfo,
+} from '../common/types';
 import { FileStatsStatus } from '../common/enum';
 
 export class IpcHandler {
@@ -29,18 +40,18 @@ export class IpcHandler {
     ipcMain.handle('loadExif', (_event, stats: IFileStats) =>
       this.loadExif(stats)
     );
-    ipcMain.handle('postLoadExif', (_event) => this.postLoadExif());
+    ipcMain.handle('cleanUpLoadExif', (_event) => this.cleanUpLoadExif());
     ipcMain.handle('loadImage', (_event, filePath: string) =>
       this.loadImage(filePath)
     );
-    ipcMain.handle('deleteMpfTag', (_event, filePathList: string[]) =>
-      this.deleteMpfTag(filePathList)
+    ipcMain.handle('deleteMpfTag', (_event, statsList: IFileStats[]) =>
+      this.deleteMpfTag(statsList)
     );
   }
 
   /**
    * ディレクトリを選択し画像ファイル情報を取得する
-   * @returns
+   * @returns ファイル情報一覧
    */
   private getFileStats() {
     return dialog
@@ -59,6 +70,11 @@ export class IpcHandler {
         return new Promise<IFileStats[]>((resolve, reject) => {
           try {
             const fileNameList = fs.readdirSync(dirPath);
+            if (_isEmpty(fileNameList)) {
+              resolve([]);
+              return;
+            }
+
             const filePathList = _map(fileNameList, (fileName) =>
               path.join(dirPath, fileName)
             );
@@ -84,24 +100,31 @@ export class IpcHandler {
 
                 resolve(fileStatList);
               },
-              error: (statError) => reject(statError),
+              error: (statError) =>
+                reject({
+                  messages: ['ファイル情報の取得に失敗しました。'],
+                  error: statError,
+                } as IErrorInfo<any>),
             });
           } catch (error) {
-            reject(error);
+            reject({
+              messages: [`${dirPath}の読み込みに失敗しました。`],
+              error,
+            } as IErrorInfo<any>);
           }
         });
       });
   }
 
   /**
-   * Exif読み込み準備
+   * Exifの読み込み準備をする
    * @returns 準備結果
    */
   private prepareLoadExif() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       ep.open().then(
         () => resolve(true),
-        () => reject(false)
+        () => resolve(false)
       );
     });
   }
@@ -147,10 +170,10 @@ export class IpcHandler {
   }
 
   /**
-   * Exif読み込み後始末
+   * Exifの読み込みリソースを開放する
    * @returns 後処理結果
    */
-  private postLoadExif() {
+  private cleanUpLoadExif() {
     return new Promise((resolve) => {
       ep.close();
       resolve(true);
@@ -177,32 +200,53 @@ export class IpcHandler {
 
   /**
    * MPFタグを削除する
-   * @param filePathList ファイルパス一覧
+   * @param statsList ファイル情報一覧
    * @returns 処理結果
    */
-  private deleteMpfTag(filePathList: string[]) {
-    const errorFileList: string[] = [];
-    return new Promise<string[]>((resolve, reject) => {
+  private deleteMpfTag(statsList: IFileStats[]) {
+    const deleteInfo = {
+      deletedList: [] as IFileStats[],
+      errorList: [],
+    } as ITagDeleteInfo;
+    return new Promise<ITagDeleteInfo>((resolve, reject) => {
       ep.open().then(
         () => {
           RxForkJoin(
-            _map(filePathList, (filePath) => {
-              return RxFrom(ep.writeMetadata(filePath, {}, ['MPF:all='])).pipe(
-                catchError(() => {
-                  errorFileList.push(path.basename(filePath));
-                  return RxOf(filePath);
+            _map(statsList, (stats) => {
+              return RxFrom(
+                ep.writeMetadata(stats.filePath, {}, [
+                  'MPF:all=',
+                  'overwrite_original',
+                ])
+              ).pipe(
+                mergeMap(() => RxFrom(this.loadExif(stats))),
+                tap((tagDeleteStats) => {
+                  deleteInfo.deletedList.push({
+                    ...tagDeleteStats,
+                    statsStatus: FileStatsStatus.ExifEdit,
+                  });
+                }),
+                catchError((writeError) => {
+                  deleteInfo.errorList.push({
+                    error: writeError,
+                    supplement: stats,
+                  });
+                  return RxOf(stats);
                 })
               );
             })
           ).subscribe({
             complete: () => {
               ep.close();
-              resolve(errorFileList);
+              resolve(deleteInfo);
             },
           });
         },
         (error: any) => {
-          reject({ errorMessage: 'MPFタグの削除に失敗しました', error });
+          reject({
+            messages: ['MPFタグの削除に失敗しました。'],
+            error,
+          } as IErrorInfo<any>);
         }
       );
     });

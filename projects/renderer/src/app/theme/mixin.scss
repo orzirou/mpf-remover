@@ -1,0 +1,18 @@
+@use '@angular/material' as mat;
+
+// @include mat.core();
+
+// ダークモードのみ適用するスタイルのModifier
+@mixin isDark() {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+}
+
+@mixin baseBgColor() {
+  background: map-get(mat.$light-theme-background-palette, status-bar);
+
+  @include isDark() {
+    background: map-get(mat.$dark-theme-background-palette, status-bar);
+  }
+}

@@ -8,6 +8,8 @@ export enum FileStatsStatus {
   ExifLoading,
   /** Exif読込完了 */
   ExifLoaded,
+  /** Exif編集 */
+  ExifEdit,
   /** エラー */
   Error,
 }

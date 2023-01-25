@@ -3,6 +3,9 @@ import { Stats } from 'fs';
 import { FileStatsStatus } from '../enum/file-stats-status';
 import { IExiftoolTag } from './exiftool-tag';
 
+/**
+ * ファイル情報
+ */
 export interface IFileStats extends Stats {
   /** id */
   id?: string;

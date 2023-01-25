@@ -1,0 +1,56 @@
+<div
+  class="image-select__container"
+  tabindex="0"
+  [class.accent]="_thumbnail && _hover"
+  (mouseover)="_hover = true"
+  (mouseout)="_hover = false"
+  (click)="onClickImage()"
+>
+  <ng-container
+    *ngIf="_thumbnail; then imageTemplate; else loadingTemplate"
+  ></ng-container>
+</div>
+
+<ng-template #imageTemplate>
+  <mat-checkbox
+    class="image-select__check"
+    [class.disabled]
+    [disabled]="_disableChecked"
+    [(ngModel)]="_checked"
+    (change)="onChangeChecked()"
+  >
+    {{ _disableChecked ? "対象外" : "MPF 削除対象" }}
+  </mat-checkbox>
+  <img
+    [src]="_thumbnail"
+    [class.exif-flip-horizontal]="
+      _orientation === ExifOrientation.FlipHorizontal
+    "
+    [class.exif-rotate180]="_orientation === ExifOrientation.Rotate180"
+    [class.exif-flip-virtical]="_orientation === ExifOrientation.FlipVirtical"
+    [class.exif-flip-virtical-rotate90]="
+      _orientation === ExifOrientation.FlipVirticalRotate90
+    "
+    [class.exif-rotate270]="_orientation === ExifOrientation.Rotate270"
+    [class.exif-flip-horizontal-rotate90]="
+      _orientation === ExifOrientation.FlipHorizontalRotate90
+    "
+    [class.exif-rotate90]="_orientation === ExifOrientation.Rotate90"
+  />
+</ng-template>
+
+<ng-template #loadingTemplate>
+  <div class="box">
+    <div class="sk-cube-grid">
+      <div class="sk-cube sk-cube1"></div>
+      <div class="sk-cube sk-cube2"></div>
+      <div class="sk-cube sk-cube3"></div>
+      <div class="sk-cube sk-cube4"></div>
+      <div class="sk-cube sk-cube5"></div>
+      <div class="sk-cube sk-cube6"></div>
+      <div class="sk-cube sk-cube7"></div>
+      <div class="sk-cube sk-cube8"></div>
+      <div class="sk-cube sk-cube9"></div>
+    </div>
+  </div>
+</ng-template>

@@ -44,5 +44,5 @@ Thumbs.db
 # This project output
 /projects/electron/dist
 /release/*
-!/release/MpfRmover-*-win.zip
-!/release/MpfRmover-*.dmg
+# !/release/MpfRmover-*-win.zip
+# !/release/MpfRmover-*.dmg

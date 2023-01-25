@@ -1,0 +1,69 @@
+@import "../../theme/mixin";
+
+:host {
+  width: 100%;
+  height: 100%;
+}
+
+.image-detail {
+  &__container {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    &.scroll {
+      overflow: auto;
+    }
+
+    &-img {
+      object-fit: contain;
+
+      transition: all 1s 0s ease-in-out;
+      // transform: scale(0);
+      opacity: 0;
+      background-color: transparent;
+
+      &.visible {
+        @include baseBgColor();
+
+        // transform: scale(1);
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.loading-shade {
+  position: absolute;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  transition: all 0.8s 0s ease-in;
+
+  visibility: hidden;
+  opacity: 0;
+
+  &.visible {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  // transition: all 1s 0s ease;
+
+  // &.visible {
+  //   visibility: visible;
+  //   opacity: 1;
+  // }
+
+  // &.invisible {
+  //   visibility: hidden;
+  //   opacity: 0;
+  // }
+}
