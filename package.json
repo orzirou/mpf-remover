@@ -13,8 +13,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:electron": "tsc -p ./projects/electron/tsconfig.json",
-    "package": "electron-builder -c ./projects/electron/config.json --mac --x64 --win --x64",
-    "release": "npm run build -- --configuration production --base-href ./ && npm run build:electron && npm run package"
+    "package": "electron-builder -c ./projects/electron/config.json --mac --x64",
+    "release": "npm run build -- --configuration production --base-href ./ && npm run build:electron && npm run package",
+    "dev:release": "npm run build -- --configuration development --base-href ./ && npm run build:electron && npm run package"
   },
   "private": true,
   "dependencies": {
