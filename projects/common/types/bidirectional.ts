@@ -15,7 +15,11 @@ export interface IBidirectional {
    * @returns 準備結果
    */
   prepareLoadExif: () => Promise<boolean>;
-  /** Exif読み込む */
+  /**
+   * Exifを読み込む
+   * @param stats ファイル情報
+   * @returns ファイル情報
+   */
   loadExif: (stats: IFileStats) => Promise<IFileStats>;
   /**
    * Exifの読み込みリソースを開放する
