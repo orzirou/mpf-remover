@@ -30,23 +30,21 @@ function createWindow() {
   return mainWindow;
 }
 
-app.on('ready', () => {
-  const ipchandler = new IpcHandler();
-  ipchandler.initialize();
-
-  createWindow();
-});
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+app.whenReady().then(() => {
+  createWindow();
+  new IpcHandler().initialize();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      new IpcHandler().initialize();
+    }
+  });
 });
 
 const makeMainMenu = (isMac: boolean) => {

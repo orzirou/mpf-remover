@@ -1,4 +1,4 @@
-import { dialog, app, ipcMain } from 'electron';
+import { dialog, app, ipcMain, BrowserWindow } from 'electron';
 import {
   map as _map,
   forEach as _forEach,
@@ -35,7 +35,7 @@ export class IpcHandler {
    * 初期処理
    */
   initialize() {
-    ipcMain.handle('getFileStats', this.getFileStats);
+    ipcMain.handle('getFileStats', (event) => this.getFileStats(event.sender));
     ipcMain.handle('prepareLoadExif', (_event) => this.prepareLoadExif());
     ipcMain.handle('loadExif', (_event, stats: IFileStats) =>
       this.loadExif(stats)
@@ -53,67 +53,79 @@ export class IpcHandler {
    * ディレクトリを選択し画像ファイル情報を取得する
    * @returns ファイル情報一覧
    */
-  private getFileStats() {
-    return dialog
-      .showOpenDialog({
-        properties: ['openDirectory'],
-        title: 'フォルダ選択',
-        defaultPath: app.getPath('downloads'),
-        filters: [{ name: '画像ファイル', extensions: ['jpeg', 'jpg'] }],
-      })
-      .then((dialogResult) => {
-        if (!dialogResult || dialogResult.canceled) {
-          return null;
-        }
-
-        const dirPath = dialogResult.filePaths[0];
-        return new Promise<IFileStats[]>((resolve, reject) => {
-          try {
-            const fileNameList = fs.readdirSync(dirPath);
-            if (_isEmpty(fileNameList)) {
-              resolve([]);
+  private getFileStats(webContents: Electron.WebContents) {
+    return new Promise((resolve, reject) => {
+      dialog
+        .showOpenDialog(BrowserWindow.fromWebContents(webContents)!, {
+          properties: ['openDirectory'],
+          title: 'フォルダ選択',
+          defaultPath: app.getPath('downloads'),
+          filters: [{ name: '画像ファイル', extensions: ['jpeg', 'jpg'] }],
+        })
+        .then(
+          (dialogResult) => {
+            if (!dialogResult || dialogResult.canceled) {
+              resolve(null);
               return;
             }
 
-            const filePathList = _map(fileNameList, (fileName) =>
-              path.join(dirPath, fileName)
-            );
-            RxForkJoin(
-              _map(filePathList, (filePath) =>
-                RxFrom(fs.promises.stat(filePath))
-              )
-            ).subscribe({
-              next: (statList) => {
-                const fileStatList: IFileStats[] = [];
-                _forEach(statList, (stat, index) => {
-                  if (stat.isFile() && IpcHandler.isJpeg(filePathList[index])) {
-                    fileStatList.push({
-                      ...stat,
-                      id: `${fileNameList[index]}_${stat.ctimeMs}`,
-                      dirPath,
-                      filePath: filePathList[index],
-                      fileName: fileNameList[index],
-                      statsStatus: FileStatsStatus.Init,
-                    });
-                  }
-                });
+            const dirPath = dialogResult.filePaths[0];
+            try {
+              const fileNameList = fs.readdirSync(dirPath);
+              if (_isEmpty(fileNameList)) {
+                resolve([]);
+                return;
+              }
 
-                resolve(fileStatList);
-              },
-              error: (statError) =>
-                reject({
-                  messages: ['ファイル情報の取得に失敗しました。'],
-                  error: statError,
-                } as IErrorInfo<any>),
-            });
-          } catch (error) {
+              const filePathList = _map(fileNameList, (fileName) =>
+                path.join(dirPath, fileName)
+              );
+              RxForkJoin(
+                _map(filePathList, (filePath) =>
+                  RxFrom(fs.promises.stat(filePath))
+                )
+              ).subscribe({
+                next: (statList) => {
+                  const fileStatList: IFileStats[] = [];
+                  _forEach(statList, (stat, index) => {
+                    if (
+                      stat.isFile() &&
+                      IpcHandler.isJpeg(filePathList[index])
+                    ) {
+                      fileStatList.push({
+                        ...stat,
+                        id: `${fileNameList[index]}_${stat.ctimeMs}`,
+                        dirPath,
+                        filePath: filePathList[index],
+                        fileName: fileNameList[index],
+                        statsStatus: FileStatsStatus.Init,
+                      });
+                    }
+                  });
+
+                  resolve(fileStatList);
+                },
+                error: (statError) =>
+                  reject({
+                    messages: ['ファイル情報の取得に失敗しました。'],
+                    error: statError,
+                  } as IErrorInfo<any>),
+              });
+            } catch (error) {
+              reject({
+                messages: [`${dirPath}の読み込みに失敗しました。`],
+                error,
+              } as IErrorInfo<any>);
+            }
+          },
+          (openDialogError) => {
             reject({
-              messages: [`${dirPath}の読み込みに失敗しました。`],
-              error,
+              messages: ['ディレクトリ選択ダイアログが開けませんでした。'],
+              error: openDialogError,
             } as IErrorInfo<any>);
           }
-        });
-      });
+        );
+    });
   }
 
   /**
