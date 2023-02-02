@@ -10,4 +10,6 @@ export enum MainPageStatus {
   Selecting,
   /** フォルダ選択済み */
   Selected,
+  /** 画像ロード済み */
+  Loaded,
 }

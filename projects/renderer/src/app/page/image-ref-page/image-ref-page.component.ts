@@ -1,5 +1,5 @@
 import { Component, AfterViewInit } from '@angular/core';
-import { BehaviorSubject, finalize, from as RxFrom, Subscription } from 'rxjs';
+import { finalize, from as RxFrom, Subscription } from 'rxjs';
 import {
   chunk as _chunk,
   isEmpty as _isEmpty,
@@ -66,8 +66,8 @@ export class ImageRefPageComponent implements AfterViewInit {
     height: '100%',
   };
 
-  /** @ignore 準備完了 */
-  _isReady = false;
+  /** @ignore ヘッダ表示 */
+  _visibleHeader = false;
 
   /** @ignore 画像ファイル読込完了数 */
   _loadCounter = 0;
@@ -75,8 +75,8 @@ export class ImageRefPageComponent implements AfterViewInit {
   /** @ignore タグ削除対象有無 */
   _hasTagDelete = false;
 
-  /** ステータスSubject */
-  private status$ = new BehaviorSubject(MainPageStatus.None);
+  /** @ignore ステータス */
+  _status = MainPageStatus.None;
 
   /** ディレクトリ選択表示中 */
   private showOpenDirectory = false;
@@ -95,7 +95,7 @@ export class ImageRefPageComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    _defer(() => this.status$.next(MainPageStatus.Initialized));
+    _defer(() => (this._status = MainPageStatus.Initialized));
   }
 
   /**
@@ -103,32 +103,39 @@ export class ImageRefPageComponent implements AfterViewInit {
    * フォルダ選択クリック検知
    */
   onClickOpenDirectory(): void {
-    if (this.showOpenDirectory) {
+    if (this._status === MainPageStatus.Selecting) {
       return;
     }
 
+    this._status = MainPageStatus.Selecting;
     this.showOpenDirectory = true;
     RxFrom(window.exif.getFileStats()).subscribe({
       next: (statsList) => {
+        this._status = MainPageStatus.Selecting;
         this.showOpenDirectory = false;
 
         if (!statsList) {
+          this._status = MainPageStatus.Initialized;
           return;
         }
 
         this.reset();
 
         if (statsList.length === 0) {
+          this._status = MainPageStatus.Initialized;
           alert('JPEG画像が存在しないディレクトリが選択されました。');
           return;
         }
+
+        this._visibleHeader = true;
+        console.log('onClickOpenDirectory', this._visibleHeader);
 
         this.subscription = new Subscription();
         this.subscription.add(
           RxFrom(window.exif.prepareLoadExif()).subscribe({
             next: (isDone) => {
               if (isDone) {
-                this.status$.next(MainPageStatus.Selected);
+                this._status = MainPageStatus.Selected;
                 this._statsList = statsList;
               } else {
                 alert(
@@ -143,6 +150,7 @@ export class ImageRefPageComponent implements AfterViewInit {
         );
       },
       error: (error: IErrorInfo<any>) => {
+        this._status = MainPageStatus.Initialized;
         this.showOpenDirectory = false;
         alert(error.messages!.join('\n'));
       },
@@ -155,7 +163,7 @@ export class ImageRefPageComponent implements AfterViewInit {
    */
   onClickClear() {
     this.reset();
-    this.status$.next(MainPageStatus.Initialized);
+    this._status = MainPageStatus.Initialized;
   }
 
   /**
@@ -167,8 +175,11 @@ export class ImageRefPageComponent implements AfterViewInit {
     this._loadCounter++;
     if (this._loadCounter === this._statsList.length) {
       RxFrom(window.exif.cleanUpLoadExif()).subscribe({
-        next: () => (this._isReady = true),
-        error: (error) => console.log(error),
+        next: () => (this._status = MainPageStatus.Loaded),
+        error: (error) => {
+          console.log(error);
+          this._status = MainPageStatus.Loaded;
+        },
       });
     }
   }
@@ -299,7 +310,8 @@ export class ImageRefPageComponent implements AfterViewInit {
    * 表示をリセットする
    */
   private reset() {
-    this._isReady = false;
+    this._visibleHeader = false;
+    console.log('reset', this._visibleHeader);
     this._loadCounter = 0;
     this._selectFile = undefined;
     this._statsList = [];
@@ -326,12 +338,5 @@ export class ImageRefPageComponent implements AfterViewInit {
       this.subscription.unsubscribe();
     }
     this.subscription = undefined;
-  }
-
-  /**
-   * ステータス
-   */
-  get _status() {
-    return this.status$.asObservable();
   }
 }

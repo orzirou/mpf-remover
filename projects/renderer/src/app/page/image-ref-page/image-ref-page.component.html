@@ -1,8 +1,5 @@
 <div class="main-page__container">
-  <div
-    *ngIf="(_status | async) === MainPageStatus.Selected"
-    class="main-page__header"
-  >
+  <div *ngIf="_visibleHeader" class="main-page__header">
     <span class="main-page__header-path">{{
       _statsList && _statsList[0] ? _statsList[0].dirPath : "-"
     }}</span>
@@ -10,6 +7,7 @@
       <button
         mat-raised-button
         class="main-page__header-btn"
+        [disabled]="_status === MainPageStatus.Selected"
         (click)="onClickOpenDirectory()"
       >
         <mat-icon>folder_open</mat-icon>
@@ -19,6 +17,7 @@
         mat-raised-button
         class="main-page__header-btn"
         color="warn"
+        [disabled]="_status === MainPageStatus.Selected"
         (click)="onClickClear()"
       >
         <mat-icon>backspace</mat-icon>
@@ -28,11 +27,7 @@
   </div>
   <div class="main-page__body">
     <ng-container
-      *ngIf="
-        (_status | async) === MainPageStatus.Initialized;
-        then initTemplate;
-        else imageTemplate
-      "
+      *ngIf="!_visibleHeader; then initTemplate; else imageTemplate"
     ></ng-container>
   </div>
 </div>
@@ -82,7 +77,10 @@
         </li>
       </ul>
       <mat-divider></mat-divider>
-      <div *ngIf="!_isReady" class="image-list__counter">
+      <div
+        *ngIf="_status === MainPageStatus.Selected"
+        class="image-list__counter"
+      >
         <ngx-mat-counterspinner
           [value]="_loadCounter"
           [display]="CounterSpinnerDisplayMode.Ratio"
@@ -90,7 +88,7 @@
           [color]="'warn'"
         ></ngx-mat-counterspinner>
       </div>
-      <div *ngIf="_isReady" class="image-list__done">
+      <div *ngIf="_status === MainPageStatus.Loaded" class="image-list__done">
         <button
           mat-raised-button
           color="primary"
