@@ -155,37 +155,40 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
     } else {
       this.stats!.statsStatus = FileStatsStatus.ExifLoading;
       this.statsChange.emit(this.stats);
-      RxFrom(window.exif.loadExif(this.stats!)).subscribe({
-        next: (complementExif) => {
-          this.stats = complementExif;
-          this.stats!.statsStatus = FileStatsStatus.ExifLoaded;
 
-          this._thumbnail = this.stats.tags!.ThumbnailImage || undefined;
-          this._orientation =
-            this.stats.tags!.Orientation || ExifOrientation.Normal;
+      this.subscription.add(
+        RxFrom(window.exif.loadExif(this.stats!)).subscribe({
+          next: (complementExif) => {
+            this.stats = complementExif;
+            this.stats!.statsStatus = FileStatsStatus.ExifLoaded;
 
-          this.changeOrientationSize(this.stats.tags!, this._orientation);
-          this.statsChange.emit(this.stats);
+            this._thumbnail = this.stats.tags!.ThumbnailImage || undefined;
+            this._orientation =
+              this.stats.tags!.Orientation || ExifOrientation.Normal;
 
-          this._checked = true;
-          this._disableChecked = _isEmpty(this.stats.tags!.MPFVersion);
+            this.changeOrientationSize(this.stats.tags!, this._orientation);
+            this.statsChange.emit(this.stats);
 
-          this.loadedEvent.emit(this.stats.id);
+            this._checked = true;
+            this._disableChecked = _isEmpty(this.stats.tags!.MPFVersion);
 
-          // 一発チェックを通知する
-          this.changeTagDelStatusEvent.emit(
-            this._disableChecked ? ExifMpfDelete.Deleted : ExifMpfDelete.Need
-          );
-        },
-        error: (error) => {
-          console.warn(this.stats!.fileName, error);
+            this.loadedEvent.emit(this.stats.id);
 
-          this.stats!.statsStatus = FileStatsStatus.Error;
-          this.statsChange.emit(this.stats);
+            // 一発チェックを通知する
+            this.changeTagDelStatusEvent.emit(
+              this._disableChecked ? ExifMpfDelete.Deleted : ExifMpfDelete.Need
+            );
+          },
+          error: (error) => {
+            console.warn(this.stats!.fileName, error);
 
-          this.loadedEvent.emit();
-        },
-      });
+            this.stats!.statsStatus = FileStatsStatus.Error;
+            this.statsChange.emit(this.stats);
+
+            this.loadedEvent.emit();
+          },
+        })
+      );
     }
   }
 
