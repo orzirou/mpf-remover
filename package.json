@@ -12,10 +12,14 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build:electron": "tsc -p ./projects/electron/tsconfig.json",
     "package": "electron-builder -c ./projects/electron/config.json --mac --x64",
-    "release": "npm run build -- --configuration production --base-href ./ && npm run build:electron && npm run package",
-    "dev:release": "npm run build -- --configuration development --base-href ./ && npm run build:electron && npm run package"
+    "build-r": "npm run build -- --configuration production --base-href ./",
+    "build-m": "tsc -p ./projects/electron/tsconfig.json",
+    "release": "rimraf ./dist && npm run build-r && npm run build-m && npm run package",
+    "dev:build-r": "npm run build -- --configuration development --base-href ./",
+    "dev:build-m": "webpack build --config ./webpack.dev.config.js --stats-error-details && cpx \"./node_modules/exiftool.pl/vendor/**/*\" ./dist/renderer/electron/vendor",
+    "dev:release": "rimraf ./dist && npm run dev:build-r && npm run build-m && npm run package",
+    "debug": "rimraf ./dist && npm run dev:build-r && npm run dev:build-m && electron ./dist/renderer/electron/main.js --trace-warnings"
   },
   "private": true,
   "dependencies": {

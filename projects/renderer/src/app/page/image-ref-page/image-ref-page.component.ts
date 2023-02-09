@@ -128,7 +128,6 @@ export class ImageRefPageComponent implements AfterViewInit {
         }
 
         this._visibleHeader = true;
-        console.log('onClickOpenDirectory', this._visibleHeader);
 
         this.subscription = new Subscription();
         this.subscription.add(

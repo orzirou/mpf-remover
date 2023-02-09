@@ -68,7 +68,11 @@ const makeMainMenu = (isMac: boolean) => {
     {
       label: '表示',
       submenu: [
-        { role: 'toggleDevTools', label: '開発者ツールを表示' },
+        {
+          role: 'toggleDevTools',
+          label: '開発者ツールを表示',
+          enabled: !app.isPackaged,
+        },
         { type: 'separator' },
         { role: 'resetZoom', label: '実際のサイズ' },
         { role: 'togglefullscreen', label: 'フルスクリーン' },
