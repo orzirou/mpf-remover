@@ -58,47 +58,11 @@
     </div>
     <mat-divider [vertical]="true"></mat-divider>
     <mat-divider></mat-divider>
-    <div class="image-list">
-      <ul class="image-list__items">
-        <li>
-          <app-image-select
-            *ngFor="
-              let stats of _statsList;
-              let idx = index;
-              trackBy: trackByFile
-            "
-            class="image-list__image"
-            [stats]="stats"
-            (statsChange)="_statsList[idx] = $event"
-            (loadedEvent)="onLoadedImage($event)"
-            (selectEvent)="onSelectFile($event)"
-            (changeTagDelStatusEvent)="onChangeTagDelStatus(stats, $event)"
-          ></app-image-select>
-        </li>
-      </ul>
-      <mat-divider></mat-divider>
-      <div
-        *ngIf="_status === MainPageStatus.Selected"
-        class="image-list__counter"
-      >
-        <ngx-mat-counterspinner
-          [value]="_loadCounter"
-          [display]="CounterSpinnerDisplayMode.Ratio"
-          [max]="_statsList.length"
-          [color]="'warn'"
-        ></ngx-mat-counterspinner>
-      </div>
-      <div *ngIf="_status === MainPageStatus.Loaded" class="image-list__done">
-        <button
-          mat-raised-button
-          color="primary"
-          [disabled]="!_hasTagDelete"
-          (click)="onClickTagDelete()"
-        >
-          MPFタグ削除
-        </button>
-      </div>
-    </div>
+    <app-image-list
+      [statsList]="_statsList"
+      (loadedEvent)="onLoadedImage($event)"
+      (selectImageEvent)="onSelectFile($event)"
+    ></app-image-list>
   </div>
 </ng-template>
 

@@ -1,4 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { from as RxFrom, of as RxOf } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import {
@@ -28,7 +35,7 @@ declare global {
   templateUrl: './image-list.component.html',
   styleUrls: ['./image-list.component.scss'],
 })
-export class ImageListComponent implements OnInit {
+export class ImageListComponent implements OnChanges {
   /** @ignore Template用 */
   CounterSpinnerDisplayMode = CounterSpinnerDisplayMode;
 
@@ -55,7 +62,14 @@ export class ImageListComponent implements OnInit {
 
   constructor(private loading: LoadingService) {}
 
-  ngOnInit() {}
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['statsList']) {
+      this._loadCounter = 0;
+      this._hasTagDelete = false;
+      this._isLoaded = false;
+      this.tagDeleteTargetList = [];
+    }
+  }
 
   /**
    * @ignore

@@ -1,30 +1,10 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { finalize, from as RxFrom, Subscription } from 'rxjs';
-import {
-  chunk as _chunk,
-  isEmpty as _isEmpty,
-  remove as _remove,
-  some as _some,
-  map as _map,
-  assign as _assign,
-  cloneDeep as _cloneDeep,
-  forEach as _forEach,
-  find as _find,
-  defer as _defer,
-} from 'lodash';
-import { CounterSpinnerDisplayMode } from 'ngx-mat-counterspinner';
+import { defer as _defer } from 'lodash';
 
-import {
-  IBidirectional,
-  IFileStats,
-  IErrorInfo,
-  ITagDeleteInfo,
-  FileStatsStatus,
-} from '../../../../../common';
-import { ExifMpfDelete } from '../../feature/image-select';
+import { IBidirectional, IFileStats, IErrorInfo } from '../../../../../common';
 import { MainPageStatus } from './image-ref-page.enum';
 import { ImageRefPageService } from './image-ref-page.service';
-import { LoadingService } from '../../feature/loading';
 
 declare global {
   interface Window {
@@ -41,12 +21,6 @@ declare global {
 export class ImageRefPageComponent implements AfterViewInit {
   /** @ignore Template用 */
   readonly MainPageStatus = MainPageStatus;
-
-  /** @ignore Template用 */
-  readonly CounterSpinnerDisplayMode = CounterSpinnerDisplayMode;
-
-  /** @ignore 表示用ファイル情報一覧 */
-  _dispStatsList: IFileStats[][] = [];
 
   /** @ignore タグ削除ボタン有効化 */
   _enableDeleteTag = false;
@@ -69,28 +43,13 @@ export class ImageRefPageComponent implements AfterViewInit {
   /** @ignore ヘッダ表示 */
   _visibleHeader = false;
 
-  /** @ignore 画像ファイル読込完了数 */
-  _loadCounter = 0;
-
-  /** @ignore タグ削除対象有無 */
-  _hasTagDelete = false;
-
   /** @ignore ステータス */
   _status = MainPageStatus.None;
-
-  /** ディレクトリ選択表示中 */
-  private showOpenDirectory = false;
-
-  /** タグ削除対象一覧 */
-  private tagDeleteTargetList: IFileStats[] = [];
 
   /** 画像表示用購読 */
   private subscription?: Subscription;
 
-  constructor(
-    private service: ImageRefPageService,
-    private loading: LoadingService
-  ) {
+  constructor(private service: ImageRefPageService) {
     console.log(this.service);
   }
 
@@ -107,26 +66,20 @@ export class ImageRefPageComponent implements AfterViewInit {
       return;
     }
 
-    this._status = MainPageStatus.Selecting;
-    this.showOpenDirectory = true;
     RxFrom(window.exif.getFileStats()).subscribe({
       next: (statsList) => {
-        this._status = MainPageStatus.Selecting;
-        this.showOpenDirectory = false;
-
         if (!statsList) {
           this._status = MainPageStatus.Initialized;
           return;
         }
-
-        this.reset();
 
         if (statsList.length === 0) {
           this._status = MainPageStatus.Initialized;
           alert('JPEG画像が存在しないディレクトリが選択されました。');
           return;
         }
-
+        this.reset();
+        this._status = MainPageStatus.Selecting;
         this._visibleHeader = true;
 
         this.subscription = new Subscription();
@@ -150,7 +103,6 @@ export class ImageRefPageComponent implements AfterViewInit {
       },
       error: (error: IErrorInfo<any>) => {
         this._status = MainPageStatus.Initialized;
-        this.showOpenDirectory = false;
         alert(error.messages!.join('\n'));
       },
     });
@@ -168,19 +120,10 @@ export class ImageRefPageComponent implements AfterViewInit {
   /**
    * @ignore
    * 画像ファイルロード完了検知
-   * @param _id id
+   * @param isSuccess ロード完了成否
    */
-  onLoadedImage(_id: string | undefined) {
-    this._loadCounter++;
-    if (this._loadCounter === this._statsList.length) {
-      RxFrom(window.exif.cleanUpLoadExif()).subscribe({
-        next: () => (this._status = MainPageStatus.Loaded),
-        error: (error) => {
-          console.log(error);
-          this._status = MainPageStatus.Loaded;
-        },
-      });
-    }
+  onLoadedImage(_isSuccess: boolean) {
+    this._status = MainPageStatus.Loaded;
   }
 
   /**
@@ -189,31 +132,10 @@ export class ImageRefPageComponent implements AfterViewInit {
    * @param stats ファイル情報
    */
   onSelectFile(stats: IFileStats) {
-    console.log(stats);
     if (this._selectFile?.id !== stats.id) {
       this._selectFile = stats;
       this.resetSize();
     }
-  }
-
-  /**
-   * @ignore
-   * MPFタグ削除ステータス変更検知
-   * @param stats ファイル情報
-   * @param status MPFタグ削除ステータス
-   */
-  onChangeTagDelStatus(stats: IFileStats, status: ExifMpfDelete) {
-    if (status === ExifMpfDelete.Need) {
-      if (
-        !_some(this.tagDeleteTargetList, (target) => target.id === stats.id)
-      ) {
-        this.tagDeleteTargetList.push(stats);
-      }
-    } else {
-      _remove(this.tagDeleteTargetList, (target) => target.id === stats.id);
-    }
-
-    this._hasTagDelete = this.tagDeleteTargetList.length > 0;
   }
 
   /**
@@ -246,76 +168,13 @@ export class ImageRefPageComponent implements AfterViewInit {
   }
 
   /**
-   * @ignore
-   * MPFタグ削除ボタンクリック検知
-   */
-  onClickTagDelete() {
-    if (!_isEmpty(this.tagDeleteTargetList)) {
-      this.loading.show();
-      RxFrom(window.exif.deleteMpfTag(this.tagDeleteTargetList))
-        .pipe(finalize(() => this.loading.hide()))
-        .subscribe({
-          next: (tagDelete: ITagDeleteInfo) => {
-            console.log(tagDelete);
-
-            let message = '';
-            let hasDelete = false;
-            if (!_isEmpty(tagDelete.deletedList)) {
-              hasDelete = true;
-
-              if (_isEmpty(tagDelete.errorList)) {
-                message = 'MPFタグを削除しました。';
-              } else {
-                message = '一部画像のMPFタグ削除に失敗しました。';
-              }
-            } else {
-              if (_isEmpty(tagDelete.errorList)) {
-                // NOP(タグ削除蓋している：ボタン押せない起きないはず)
-                return;
-              } else {
-                message = 'MPFタグ削除に失敗しました。';
-              }
-            }
-
-            alert(message);
-            _forEach(tagDelete.deletedList, (deleteStats) => {
-              _forEach(this._statsList, (_stats, index) => {
-                if (this._statsList[index].id === deleteStats.id) {
-                  this._statsList[index] = deleteStats;
-                  this.onChangeTagDelStatus(deleteStats, ExifMpfDelete.Deleted);
-                  return false;
-                }
-                return;
-              });
-            });
-          },
-          error: (error) => console.log(error),
-        });
-    }
-  }
-
-  /**
-   * @ignore
-   * 画像の再描画処理
-   * @param _index インデックス
-   * @param _data 行データ
-   * @returns
-   */
-  trackByFile(_index: number, stats: IFileStats) {
-    return stats.id;
-  }
-
-  /**
    * 表示をリセットする
    */
   private reset() {
     this._visibleHeader = false;
-    console.log('reset', this._visibleHeader);
-    this._loadCounter = 0;
     this._selectFile = undefined;
     this._statsList = [];
-    this._dispStatsList = [];
-    this.tagDeleteTargetList = [];
+    this._status = MainPageStatus.Initialized;
     this.disposeSubscription();
   }
 
