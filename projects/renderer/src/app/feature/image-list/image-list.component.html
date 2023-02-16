@@ -1,4 +1,15 @@
 <div class="image-list">
+  <div class="image-list__check">
+    <mat-checkbox
+      [checked]="_tagDelateStatus === TagDelete.All"
+      [disabled]="!_isLoaded || _tagDelateStatus === TagDelete.None"
+      [indeterminate]="_tagDelateStatus === TagDelete.Part"
+      (change)="onChangeChecked($event.checked)"
+    >
+      {{ _isLoaded ? _checkLabel : "" }}
+    </mat-checkbox>
+  </div>
+  <mat-divider></mat-divider>
   <ul class="image-list__items">
     <li>
       <app-image-select
@@ -25,7 +36,7 @@
     <button
       mat-raised-button
       color="primary"
-      [disabled]="!_hasTagDelete"
+      [disabled]="_tagDelateStatus === TagDelete.None"
       (click)="onClickTagDelete()"
     >
       MPFタグ削除

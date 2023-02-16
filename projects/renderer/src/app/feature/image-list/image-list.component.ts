@@ -23,6 +23,7 @@ import {
 } from '../../../../../common';
 import { ExifMpfDelete } from '../image-select';
 import { LoadingService } from '../loading';
+import { TagDelete } from './image-list.enum';
 
 declare global {
   interface Window {
@@ -39,6 +40,9 @@ export class ImageListComponent implements OnChanges {
   /** @ignore Template用 */
   CounterSpinnerDisplayMode = CounterSpinnerDisplayMode;
 
+  /** @ignore Template用 */
+  TagDelete = TagDelete;
+
   /** @ignore ファイル情報一覧 */
   @Input() statsList: IFileStats[] = [];
 
@@ -51,12 +55,14 @@ export class ImageListComponent implements OnChanges {
   /** @ignore 画像ファイル読込完了数 */
   _loadCounter = 0;
 
-  /** @ignore タグ削除対象有無 */
-  _hasTagDelete = false;
-
   /** @ignore 画像一覧ロード済み */
   _isLoaded = false;
 
+  /** @ignore 全変更用チェックボックスのラベル */
+  _checkLabel = '';
+
+  /** @ignore タグ削除有無状態 */
+  _tagDelateStatus = TagDelete.None;
   /** タグ削除対象一覧 */
   private tagDeleteTargetList: IFileStats[] = [];
 
@@ -65,7 +71,8 @@ export class ImageListComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['statsList']) {
       this._loadCounter = 0;
-      this._hasTagDelete = false;
+      this._tagDelateStatus = TagDelete.None;
+      this._checkLabel = '';
       this._isLoaded = false;
       this.tagDeleteTargetList = [];
     }
@@ -121,7 +128,18 @@ export class ImageListComponent implements OnChanges {
       _remove(this.tagDeleteTargetList, (target) => target.id === stats.id);
     }
 
-    this._hasTagDelete = this.tagDeleteTargetList.length > 0;
+    if (this.tagDeleteTargetList.length > 0) {
+      if (this.statsList.length === this.tagDeleteTargetList.length) {
+        this._tagDelateStatus = TagDelete.All;
+        this._checkLabel = '全画像のMPFを削除';
+      } else {
+        this._tagDelateStatus = TagDelete.Part;
+        this._checkLabel = '一部画像のMPFを削除';
+      }
+    } else {
+      this._tagDelateStatus = TagDelete.None;
+      this._checkLabel = 'MPF削除無し';
+    }
   }
 
   /**
@@ -170,6 +188,15 @@ export class ImageListComponent implements OnChanges {
           },
           error: (error) => console.log(error),
         });
+    }
+  }
+
+  /**
+   * @ignore
+   * チェック変更検知
+   */
+  onChangeChecked(isChecked: boolean) {
+    if (isChecked) {
     }
   }
 
