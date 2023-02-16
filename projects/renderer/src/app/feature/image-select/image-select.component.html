@@ -14,7 +14,6 @@
 <ng-template #imageTemplate>
   <mat-checkbox
     class="image-select__check"
-    [class.disabled]
     [disabled]="_disableChecked"
     [(ngModel)]="_checked"
     (change)="onChangeChecked()"
