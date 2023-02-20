@@ -16,6 +16,8 @@
         *ngFor="let stats of statsList; let idx = index; trackBy: trackByFile"
         class="image-list__image"
         [stats]="stats"
+        [checked]="_statsTagDeleteMng[stats.id!].checked"
+        [deleted]="_statsTagDeleteMng[stats.id!].deleted"
         (statsChange)="statsList[idx] = $event"
         (loadedEvent)="onLoadedImage($event)"
         (selectEvent)="onSelectFile($event)"

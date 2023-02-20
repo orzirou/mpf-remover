@@ -14,11 +14,12 @@
 <ng-template #imageTemplate>
   <mat-checkbox
     class="image-select__check"
-    [disabled]="_disableChecked"
-    [(ngModel)]="_checked"
-    (change)="onChangeChecked()"
+    [checked]="checked"
+    [disabled]="deleted || false"
+    (change)="onChangeChecked($event)"
+    (click)="onClickCheckBox($event)"
   >
-    {{ _disableChecked ? "対象外" : "MPF 削除対象" }}
+    {{ deleted ? "対象外" : "MPF 削除対象" }}
   </mat-checkbox>
   <img
     [src]="_thumbnail"

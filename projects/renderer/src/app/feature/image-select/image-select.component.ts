@@ -11,6 +11,7 @@ import {
 import { from as RxFrom, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { isNil as _isNil, defer as _defer, isEmpty as _isEmpty } from 'lodash';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 
 import {
   IBidirectional,
@@ -20,6 +21,7 @@ import {
 } from '../../../../../common';
 
 import { ExifMpfDelete, ExifOrientation } from './image-select.enum';
+import { ITagDeleteMng } from './image-select.interface';
 
 declare global {
   interface Window {
@@ -39,6 +41,10 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
   /** ファイル情報 */
   @Input() stats?: IFileStats;
 
+  @Input() checked?: boolean;
+
+  @Input() deleted?: boolean;
+
   /** ファイル情報変更イベント */
   @Output() statsChange: EventEmitter<IFileStats> = new EventEmitter();
 
@@ -46,7 +52,7 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
   @Output() loadedEvent: EventEmitter<string> = new EventEmitter();
 
   /** MPFタグ削除ステータス変更イベント */
-  @Output() changeTagDelStatusEvent: EventEmitter<ExifMpfDelete> =
+  @Output() changeTagDelStatusEvent: EventEmitter<ITagDeleteMng> =
     new EventEmitter();
 
   /** 選択イベント */
@@ -57,12 +63,6 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
 
   /** @ignore hover中 */
   _hover = false;
-
-  /** @ignore チェック有無 */
-  _checked = false;
-
-  /** @ignore チェックの無効化(MPFタグが存在しない) */
-  _disableChecked = false;
 
   /** 回転 */
   _orientation = ExifOrientation.Normal;
@@ -121,12 +121,22 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
   /**
    * @ignore
    * チェック変更検知
+   * @param change 変更内容
    */
-  onChangeChecked() {
-    this.isClickCheckBox = true;
-    this.changeTagDelStatusEvent.emit(
-      this._checked ? ExifMpfDelete.Need : ExifMpfDelete.Ignore
-    );
+  onChangeChecked(change: MatCheckboxChange) {
+    this.changeTagDelStatusEvent.emit({
+      checked: change.checked,
+      deleted: false,
+    });
+  }
+
+  /**
+   * @ignore
+   * チェックボックスクリック検知
+   * @param event イベント
+   */
+  onClickCheckBox(event: MouseEvent) {
+    event.stopPropagation();
   }
 
   /**
@@ -151,7 +161,8 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
         this.stats!.tags!.Orientation || ExifOrientation.Normal;
       this.changeOrientationSize(this.stats!.tags!, this._orientation);
 
-      this._disableChecked = _isEmpty(this.stats!.tags!.MPFVersion);
+      const deleted = this.tagDeleted;
+      this.changeTagDelStatusEvent.emit({ checked: !deleted, deleted });
     } else {
       this.stats!.statsStatus = FileStatsStatus.ExifLoading;
       this.statsChange.emit(this.stats);
@@ -169,15 +180,11 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
             this.changeOrientationSize(this.stats.tags!, this._orientation);
             this.statsChange.emit(this.stats);
 
-            this._checked = true;
-            this._disableChecked = _isEmpty(this.stats.tags!.MPFVersion);
-
             this.loadedEvent.emit(this.stats.id);
 
             // 一発チェックを通知する
-            this.changeTagDelStatusEvent.emit(
-              this._disableChecked ? ExifMpfDelete.Deleted : ExifMpfDelete.Need
-            );
+            const deleted = this.tagDeleted;
+            this.changeTagDelStatusEvent.emit({ checked: !deleted, deleted });
           },
           error: (error) => {
             console.warn(this.stats!.fileName, error);
@@ -213,5 +220,9 @@ export class ImageSelectComponent implements OnInit, OnChanges, OnDestroy {
         tags.ExifImageHeight = height;
         tags.ImageSize = `${width}x${height}`;
     }
+  }
+
+  private get tagDeleted() {
+    return _isEmpty(this.stats!.tags!.MPFVersion);
   }
 }

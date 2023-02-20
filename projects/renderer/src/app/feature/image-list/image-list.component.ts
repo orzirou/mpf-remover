@@ -13,6 +13,7 @@ import {
   remove as _remove,
   isEmpty as _isEmpty,
   forEach as _forEach,
+  filter as _filter,
 } from 'lodash';
 import { CounterSpinnerDisplayMode } from 'ngx-mat-counterspinner';
 
@@ -21,7 +22,7 @@ import {
   IBidirectional,
   ITagDeleteInfo,
 } from '../../../../../common';
-import { ExifMpfDelete } from '../image-select';
+import { ExifMpfDelete, ITagDeleteMng } from '../image-select';
 import { LoadingService } from '../loading';
 import { TagDelete } from './image-list.enum';
 
@@ -63,8 +64,9 @@ export class ImageListComponent implements OnChanges {
 
   /** @ignore タグ削除有無状態 */
   _tagDelateStatus = TagDelete.None;
+
   /** タグ削除対象一覧 */
-  private tagDeleteTargetList: IFileStats[] = [];
+  _statsTagDeleteMng: { [key: string]: ITagDeleteMng } = {};
 
   constructor(private loading: LoadingService) {}
 
@@ -74,8 +76,15 @@ export class ImageListComponent implements OnChanges {
       this._tagDelateStatus = TagDelete.None;
       this._checkLabel = '';
       this._isLoaded = false;
-      this.tagDeleteTargetList = [];
+      this.update();
     }
+  }
+
+  update() {
+    this._statsTagDeleteMng = {};
+    _forEach(this.statsList, (stats) => {
+      this._statsTagDeleteMng[stats.id!] = { checked: true, deleted: false };
+    });
   }
 
   /**
@@ -115,21 +124,24 @@ export class ImageListComponent implements OnChanges {
    * @ignore
    * MPFタグ削除ステータス変更検知
    * @param stats ファイル情報
-   * @param status MPFタグ削除ステータス
+   * @param tagDeleteMng タグ削除管理
    */
-  onChangeTagDelStatus(stats: IFileStats, status: ExifMpfDelete) {
-    if (status === ExifMpfDelete.Need) {
-      if (
-        !_some(this.tagDeleteTargetList, (target) => target.id === stats.id)
-      ) {
-        this.tagDeleteTargetList.push(stats);
-      }
-    } else {
-      _remove(this.tagDeleteTargetList, (target) => target.id === stats.id);
-    }
+  onChangeTagDelStatus(stats: IFileStats, tagDeleteMng: ITagDeleteMng) {
+    this._statsTagDeleteMng[stats.id!] = { ...tagDeleteMng };
 
-    if (this.tagDeleteTargetList.length > 0) {
-      if (this.statsList.length === this.tagDeleteTargetList.length) {
+    let targetCounter = 0;
+    let checkedCounter = 0;
+    let hasChecked = false;
+    _forEach(this._statsTagDeleteMng, (mng, _id) => {
+      targetCounter = !mng.deleted ? ++targetCounter : targetCounter;
+      checkedCounter = mng.checked ? ++checkedCounter : checkedCounter;
+      if (!hasChecked && mng.checked && !mng.deleted) {
+        hasChecked = true;
+      }
+    });
+
+    if (hasChecked) {
+      if (targetCounter === checkedCounter) {
         this._tagDelateStatus = TagDelete.All;
         this._checkLabel = '全画像のMPFを削除';
       } else {
@@ -138,7 +150,7 @@ export class ImageListComponent implements OnChanges {
       }
     } else {
       this._tagDelateStatus = TagDelete.None;
-      this._checkLabel = 'MPF削除無し';
+      this._checkLabel = 'MPF削除対象無し';
     }
   }
 
@@ -147,9 +159,13 @@ export class ImageListComponent implements OnChanges {
    * MPFタグ削除ボタンクリック検知
    */
   onClickTagDelete() {
-    if (!_isEmpty(this.tagDeleteTargetList)) {
+    const deleteList = _filter(this.statsList, (stats) => {
+      const mng = this._statsTagDeleteMng[stats.id!];
+      return mng.checked && !mng.deleted;
+    });
+    if (!_isEmpty(deleteList)) {
       this.loading.show();
-      RxFrom(window.exif.deleteMpfTag(this.tagDeleteTargetList))
+      RxFrom(window.exif.deleteMpfTag(deleteList))
         .pipe(finalize(() => this.loading.hide()))
         .subscribe({
           next: (tagDelete: ITagDeleteInfo) => {
@@ -175,16 +191,21 @@ export class ImageListComponent implements OnChanges {
             }
 
             alert(message);
-            _forEach(tagDelete.deletedList, (deleteStats) => {
-              _forEach(this.statsList, (_stats, index) => {
-                if (this.statsList[index].id === deleteStats.id) {
-                  this.statsList[index] = deleteStats;
-                  this.onChangeTagDelStatus(deleteStats, ExifMpfDelete.Deleted);
-                  return false;
-                }
-                return;
+            if (hasDelete) {
+              _forEach(tagDelete.deletedList, (deleteStats) => {
+                _forEach(this.statsList, (_stats, index) => {
+                  if (this.statsList[index].id === deleteStats.id) {
+                    this.statsList[index] = deleteStats;
+                    this.onChangeTagDelStatus(deleteStats, {
+                      checked: false,
+                      deleted: true,
+                    });
+                    return false;
+                  }
+                  return;
+                });
               });
-            });
+            }
           },
           error: (error) => console.log(error),
         });
@@ -194,10 +215,14 @@ export class ImageListComponent implements OnChanges {
   /**
    * @ignore
    * チェック変更検知
+   * @param checked チェック有無
    */
-  onChangeChecked(isChecked: boolean) {
-    if (isChecked) {
-    }
+  onChangeChecked(checked: boolean) {
+    _forEach(this._statsTagDeleteMng, (mng, _id) => {
+      if (!mng.deleted) {
+        mng.checked = checked;
+      }
+    });
   }
 
   /**
