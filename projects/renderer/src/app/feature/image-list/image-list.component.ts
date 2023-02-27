@@ -128,30 +128,7 @@ export class ImageListComponent implements OnChanges {
    */
   onChangeTagDelStatus(stats: IFileStats, tagDeleteMng: ITagDeleteMng) {
     this._statsTagDeleteMng[stats.id!] = { ...tagDeleteMng };
-
-    let targetCounter = 0;
-    let checkedCounter = 0;
-    let hasChecked = false;
-    _forEach(this._statsTagDeleteMng, (mng, _id) => {
-      targetCounter = !mng.deleted ? ++targetCounter : targetCounter;
-      checkedCounter = mng.checked ? ++checkedCounter : checkedCounter;
-      if (!hasChecked && mng.checked && !mng.deleted) {
-        hasChecked = true;
-      }
-    });
-
-    if (hasChecked) {
-      if (targetCounter === checkedCounter) {
-        this._tagDelateStatus = TagDelete.All;
-        this._checkLabel = '全画像のMPFを削除';
-      } else {
-        this._tagDelateStatus = TagDelete.Part;
-        this._checkLabel = '一部画像のMPFを削除';
-      }
-    } else {
-      this._tagDelateStatus = TagDelete.None;
-      this._checkLabel = 'MPF削除対象無し';
-    }
+    this.updateTagDeleteStatus();
   }
 
   /**
@@ -196,15 +173,17 @@ export class ImageListComponent implements OnChanges {
                 _forEach(this.statsList, (_stats, index) => {
                   if (this.statsList[index].id === deleteStats.id) {
                     this.statsList[index] = deleteStats;
-                    this.onChangeTagDelStatus(deleteStats, {
+                    this._statsTagDeleteMng[deleteStats.id!] = {
                       checked: false,
                       deleted: true,
-                    });
+                    };
                     return false;
                   }
                   return;
                 });
               });
+
+              this.updateTagDeleteStatus();
             }
           },
           error: (error) => console.log(error),
@@ -223,6 +202,7 @@ export class ImageListComponent implements OnChanges {
         mng.checked = checked;
       }
     });
+    this.updateTagDeleteStatus();
   }
 
   /**
@@ -234,5 +214,31 @@ export class ImageListComponent implements OnChanges {
    */
   trackByFile(_index: number, stats: IFileStats) {
     return stats.id;
+  }
+
+  /**
+   * MPFタグ削除ステータス変更検知
+   */
+  private updateTagDeleteStatus() {
+    let targetCounter = 0;
+    let checkedCounter = 0;
+    _forEach(this._statsTagDeleteMng, (mng, _id) => {
+      targetCounter = !mng.deleted ? ++targetCounter : targetCounter;
+      checkedCounter = mng.checked ? ++checkedCounter : checkedCounter;
+    });
+
+    if (targetCounter && targetCounter === checkedCounter) {
+      this._tagDelateStatus = TagDelete.All;
+      this._checkLabel = '全画像のMPFを削除';
+    } else if (checkedCounter) {
+      this._tagDelateStatus = TagDelete.Part;
+      this._checkLabel = '一部画像のMPFを削除';
+    } else if (targetCounter) {
+      this._tagDelateStatus = TagDelete.Uncheck;
+      this._checkLabel = 'MPF削除対象を未選択';
+    } else {
+      this._tagDelateStatus = TagDelete.None;
+      this._checkLabel = 'MPF削除対象無し';
+    }
   }
 }

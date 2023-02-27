@@ -38,7 +38,10 @@
     <button
       mat-raised-button
       color="primary"
-      [disabled]="_tagDelateStatus === TagDelete.None"
+      [disabled]="
+        _tagDelateStatus === TagDelete.None ||
+        _tagDelateStatus === TagDelete.Uncheck
+      "
       (click)="onClickTagDelete()"
     >
       MPFタグ削除
