@@ -1,6 +1,7 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { finalize, from as RxFrom, Subscription } from 'rxjs';
 import { defer as _defer } from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 
 import { IBidirectional, IFileStats, IErrorInfo } from '../../../../../common';
 import { MainPageStatus } from './image-ref-page.enum';
@@ -49,7 +50,10 @@ export class ImageRefPageComponent implements AfterViewInit {
   /** 画像表示用購読 */
   private subscription?: Subscription;
 
-  constructor(private service: ImageRefPageService) {
+  constructor(
+    private service: ImageRefPageService,
+    private toastr: ToastrService
+  ) {
     console.log(this.service);
   }
 
@@ -75,7 +79,10 @@ export class ImageRefPageComponent implements AfterViewInit {
 
         if (statsList.length === 0) {
           this._status = MainPageStatus.Initialized;
-          alert('JPEG画像が存在しないディレクトリが選択されました。');
+          this.toastr;
+          this.toastr.warning(
+            'JPEG画像が存在しないディレクトリが選択されました。'
+          );
           return;
         }
         this.reset();
@@ -90,7 +97,7 @@ export class ImageRefPageComponent implements AfterViewInit {
                 this._status = MainPageStatus.Selected;
                 this._statsList = statsList;
               } else {
-                alert(
+                this.toastr.error(
                   'ライブラリのロードに失敗しました。\nお手数ですが、もう一度フォルダを選択してください。'
                 );
                 RxFrom(window.exif.cleanUpLoadExif())

@@ -16,6 +16,7 @@ import {
   filter as _filter,
 } from 'lodash';
 import { CounterSpinnerDisplayMode } from 'ngx-mat-counterspinner';
+import { ToastrService } from 'ngx-toastr';
 
 import {
   IFileStats,
@@ -68,7 +69,9 @@ export class ImageListComponent implements OnChanges {
   /** タグ削除対象一覧 */
   _statsTagDeleteMng: { [key: string]: ITagDeleteMng } = {};
 
-  constructor(private loading: LoadingService) {}
+  constructor(private loading: LoadingService, private toastr: ToastrService) {
+    console.log(this.toastr);
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['statsList']) {
@@ -167,7 +170,7 @@ export class ImageListComponent implements OnChanges {
               }
             }
 
-            alert(message);
+            this.toastr.info(message);
             if (hasDelete) {
               _forEach(tagDelete.deletedList, (deleteStats) => {
                 _forEach(this.statsList, (_stats, index) => {
