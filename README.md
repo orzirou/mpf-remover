@@ -2,12 +2,10 @@
 
 ## Summary
 
-This application can delete easily MPF tags of exif.
+このアプリは Google Photos の設定を節約画質(旧設定名称 高画質)にしているにも関わらず、圧縮保存されない画像が圧縮されるするためのものです。
 
-## Why delete MPF
-
-If the mpf tag exists in exif, Google Photos storage consumption cannot be reduced.  
-It is possible to remove mpf tags using exiftool, but some people are not good at command line, so I made an application.
+EXIF データ内に MPF という情報が含まれる場合、Google Photos では圧縮されないため MPF タグを削除します。  
+※exiftool を使ったコマンド操作が難しい方向けのアプリです。
 
 ## Sample
 
@@ -15,5 +13,8 @@ It is possible to remove mpf tags using exiftool, but some people are not good a
 
 ## Disclaimer
 
-This application edit your important image, so it is recommended to backup it.
-The author is not responsible for any damage caused by using this application.
+このアプリケーションを利用したことによって発生したいかなる事象についても、当方責任は負いかねます。
+
+画像データは大切な物です。  
+バックアップを行った上で実施することをおすすめします。  
+※一応、変更前データも出力しますが利用される方が責任をもってバックアップをとっておいてください。
