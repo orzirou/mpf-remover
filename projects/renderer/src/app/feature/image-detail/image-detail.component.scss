@@ -26,8 +26,6 @@
       background-color: transparent;
 
       &.visible {
-        @include baseBgColor();
-
         opacity: 1;
       }
     }

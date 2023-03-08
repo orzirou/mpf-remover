@@ -1,6 +1,4 @@
-@use '@angular/material' as mat;
-
-// @include mat.core();
+@use "@angular/material" as mat;
 
 // ダークモードのみ適用するスタイルのModifier
 @mixin isDark() {

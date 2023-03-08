@@ -12,7 +12,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "package": "electron-builder -c ./projects/electron/config.json --mac --x64",
+    "package": "electron-builder -c ./projects/electron/config.json --mac --x64 --dir --win --x64 --dir",
     "build-r": "npm run build -- --configuration production --base-href ./",
     "build-m": "tsc -p ./projects/electron/tsconfig.json",
     "release": "rimraf ./dist && npm run build-r && npm run build-m && npm run package",
