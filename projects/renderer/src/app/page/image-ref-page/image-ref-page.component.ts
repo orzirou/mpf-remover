@@ -47,6 +47,9 @@ export class ImageRefPageComponent implements AfterViewInit {
   /** @ignore ステータス */
   _status = MainPageStatus.None;
 
+  /** 撮影情報表示中 */
+  private shownInfo = true;
+
   /** 画像表示用購読 */
   private subscription?: Subscription;
 
@@ -172,6 +175,16 @@ export class ImageRefPageComponent implements AfterViewInit {
       width: this._selectFile?.tags?.ExifImageWidth + 'px',
       height: this._selectFile?.tags?.ExifImageHeight + 'px',
     };
+  }
+
+  /**
+   * 撮影情報ボタンクリック検知
+   */
+  onClickInfo() {
+    if (!this.shownInfo) {
+      // exif表示
+    }
+    this.shownInfo = !this.shownInfo;
   }
 
   /**

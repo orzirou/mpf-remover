@@ -51,7 +51,7 @@
       flex: 1 1 0px;
       min-width: 0;
 
-      .scale-switch {
+      .switch-btn {
         display: flex;
         flex-direction: column;
 
@@ -59,7 +59,7 @@
         right: 30px;
         bottom: 30px;
 
-        &__btn {
+        & > button {
           &:not(:last-child) {
             margin-bottom: 15px;
           }

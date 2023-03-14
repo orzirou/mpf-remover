@@ -67,10 +67,19 @@
 
 <ng-template #selectFileTemplate>
   <app-image-detail [stats]="_selectFile" [size]="_size"></app-image-detail>
-  <div class="scale-switch">
+  <div class="switch-btn">
     <button
       mat-mini-fab
-      class="scale-switch__btn"
+      class="switch-btn__info"
+      color="accent"
+      matTooltip="撮影情報"
+      matTooltipPosition="left"
+      (click)="onClickInfo()"
+    >
+      <mat-icon>receipt_long</mat-icon>
+    </button>
+    <button
+      mat-mini-fab
       color="accent"
       matTooltip="フィット"
       matTooltipPosition="left"
@@ -80,7 +89,6 @@
     </button>
     <button
       mat-mini-fab
-      class="scale-switch__btn"
       color="accent"
       matTooltip="等倍"
       matTooltipPosition="left"
