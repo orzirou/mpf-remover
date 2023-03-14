@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @NgModule({
   declarations: [],
@@ -19,6 +20,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatMenuModule,
     MatDividerModule,
     MatCheckboxModule,
+    MatTooltipModule,
   ],
   exports: [
     MatToolbarModule,
@@ -27,6 +29,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatMenuModule,
     MatDividerModule,
     MatCheckboxModule,
+    MatTooltipModule,
   ],
 })
 export class MaterialModule {}
