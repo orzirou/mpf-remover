@@ -8,6 +8,5 @@ import { LoadingComponent } from './loading.component';
 @NgModule({
   declarations: [LoadingComponent],
   imports: [CommonModule, MaterialModule, NgxMatCounterspinnerModule],
-  entryComponents: [LoadingComponent],
 })
 export class LoadingModule {}
