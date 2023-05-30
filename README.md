@@ -9,7 +9,7 @@ EXIF データ内に MPF という情報が含まれる場合、Google Photos �
 
 ## Sample
 
-[![LGTM](https://media.giphy.com/media/fV5ezKmrRfsuAWUwkK/giphy.gif)](https://media.giphy.com/media/fV5ezKmrRfsuAWUwkK/giphy.gif)
+後日
 
 ## Disclaimer
 
